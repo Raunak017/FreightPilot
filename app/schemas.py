@@ -58,3 +58,36 @@ class NegotiateResponse(BaseModel):
     message: str = Field(..., description="Human-readable message for the agent to relay")
     round_number: int = Field(..., description="The round this response is for")
     loadboard_rate: float = Field(..., description="The original listed rate for reference")
+
+
+# --- Call logging ---
+
+class LogCallRequest(BaseModel):
+    mc_number: str | None = None
+    carrier_name: str | None = None
+    dot_number: int | None = None
+    matched_load_id: str | None = None
+    final_price: float | None = None
+    rounds_used: int | None = None
+    outcome: str = Field(..., description="booked, declined_by_carrier, no_eligible_mc, no_matching_load, negotiation_failed, abandoned")
+    sentiment: str | None = Field(None, description="positive, neutral, or negative")
+    transcript_summary: str | None = None
+
+
+class CallResponse(BaseModel):
+    id: int
+    mc_number: str | None = None
+    carrier_name: str | None = None
+    dot_number: int | None = None
+    matched_load_id: str | None = None
+    final_price: float | None = None
+    rounds_used: int | None = None
+    outcome: str
+    sentiment: str | None = None
+    transcript_summary: str | None = None
+    created_at: str
+
+
+class CallListResponse(BaseModel):
+    results: list[CallResponse]
+    count: int

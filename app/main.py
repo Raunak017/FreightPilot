@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI
 
 from app.auth import require_api_key
 from app.db import init_db
-from app.routes import carriers, health, loads, negotiate
+from app.routes import calls, carriers, health, loads, negotiate
 
 
 @asynccontextmanager
@@ -25,3 +25,4 @@ app.include_router(health.router)
 app.include_router(carriers.router)
 app.include_router(loads.router)
 app.include_router(negotiate.router)
+app.include_router(calls.router)
