@@ -38,4 +38,5 @@ class Call(Base):
     outcome = Column(String, nullable=False)
     sentiment = Column(String, nullable=True)
     transcript_summary = Column(Text, nullable=True)
+    duration = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now())

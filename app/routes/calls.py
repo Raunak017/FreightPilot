@@ -21,6 +21,7 @@ async def log_call(req: LogCallRequest, db: Session = Depends(get_db)) -> CallRe
         outcome=req.outcome,
         sentiment=req.sentiment,
         transcript_summary=req.transcript_summary,
+        duration=req.duration,
     )
     db.add(call)
     db.commit()
@@ -59,5 +60,6 @@ def _call_to_response(call: Call) -> CallResponse:
         outcome=call.outcome,
         sentiment=call.sentiment,
         transcript_summary=call.transcript_summary,
+        duration=call.duration,
         created_at=str(call.created_at),
     )

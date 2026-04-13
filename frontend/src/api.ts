@@ -7,13 +7,14 @@ const headers: HeadersInit = {
   'X-API-Key': API_KEY,
 }
 
-export async function fetchMetrics(): Promise<Metrics> {
-  const res = await fetch('/metrics/', { headers })
+export async function fetchMetrics(days?: number): Promise<Metrics> {
+  const params = days ? `?days=${days}` : ''
+  const res = await fetch(`/metrics/${params}`, { headers })
   if (!res.ok) throw new Error(`Metrics fetch failed: ${res.status}`)
   return res.json()
 }
 
-export async function fetchCalls(limit = 20): Promise<CallList> {
+export async function fetchCalls(limit = 50): Promise<CallList> {
   const res = await fetch(`/calls/?limit=${limit}`, { headers })
   if (!res.ok) throw new Error(`Calls fetch failed: ${res.status}`)
   return res.json()

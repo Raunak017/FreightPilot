@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Call } from '../types'
 
 const OUTCOME_BADGE: Record<string, string> = {
@@ -5,7 +6,6 @@ const OUTCOME_BADGE: Record<string, string> = {
   declined_by_carrier: 'bg-amber-50 text-amber-700 border-amber-200',
   no_eligible_mc: 'bg-red-50 text-red-700 border-red-200',
   no_matching_load: 'bg-violet-50 text-violet-700 border-violet-200',
-  negotiation_failed: 'bg-orange-50 text-orange-700 border-orange-200',
   abandoned: 'bg-slate-50 text-slate-600 border-slate-200',
 }
 
@@ -20,7 +20,6 @@ const OUTCOME_LABELS: Record<string, string> = {
   declined_by_carrier: 'Declined',
   no_eligible_mc: 'Ineligible MC',
   no_matching_load: 'No Match',
-  negotiation_failed: 'Neg. Failed',
   abandoned: 'Abandoned',
 }
 
@@ -47,11 +46,32 @@ function formatPrice(price: number | null): string {
   return `$${price.toLocaleString()}`
 }
 
+function formatDuration(seconds: number | null): string {
+  if (seconds === null) return '-'
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+}
+
 interface CallsTableProps {
   calls: Call[]
 }
 
 export default function CallsTable({ calls }: CallsTableProps) {
+  const [showAll, setShowAll] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const filtered = search
+    ? calls.filter(
+        (c) =>
+          c.matched_load_id?.toLowerCase().includes(search.toLowerCase()) ||
+          c.carrier_name?.toLowerCase().includes(search.toLowerCase()) ||
+          c.mc_number?.includes(search)
+      )
+    : calls
+
+  const displayed = showAll ? filtered : filtered.slice(0, 5)
+
   if (calls.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -63,8 +83,15 @@ export default function CallsTable({ calls }: CallsTableProps) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="p-6 pb-0">
-        <h3 className="text-sm font-semibold text-slate-700 mb-4">Recent Calls</h3>
+      <div className="p-6 pb-3 flex items-center justify-between gap-4 flex-wrap">
+        <h3 className="text-sm font-semibold text-slate-700">Recent Calls</h3>
+        <input
+          type="text"
+          placeholder="Search by load ID, carrier, or MC..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+        />
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -77,10 +104,11 @@ export default function CallsTable({ calls }: CallsTableProps) {
               <th className="text-left px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Sentiment</th>
               <th className="text-right px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Price</th>
               <th className="text-center px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Rounds</th>
+              <th className="text-center px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Duration</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {calls.map((call) => (
+            {displayed.map((call) => (
               <tr key={call.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-3 text-slate-500 whitespace-nowrap">{formatDate(call.created_at)}</td>
                 <td className="px-6 py-3">
@@ -108,11 +136,22 @@ export default function CallsTable({ calls }: CallsTableProps) {
                 </td>
                 <td className="px-6 py-3 text-right font-medium text-slate-700">{formatPrice(call.final_price)}</td>
                 <td className="px-6 py-3 text-center text-slate-500">{call.rounds_used ?? '-'}</td>
+                <td className="px-6 py-3 text-center text-slate-500">{formatDuration(call.duration)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {filtered.length > 5 && (
+        <div className="p-4 text-center border-t border-slate-100">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            {showAll ? 'Show Less' : `View All Calls (${filtered.length})`}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

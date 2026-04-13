@@ -72,6 +72,7 @@ class LogCallRequest(BaseModel):
     outcome: str = Field(..., description="booked, declined_by_carrier, no_eligible_mc, no_matching_load, abandoned")
     sentiment: str | None = Field(None, description="positive, neutral, or negative")
     transcript_summary: str | None = None
+    duration: int | None = Field(None, description="Call duration in seconds")
 
     @field_validator("mc_number", mode="before")
     @classmethod
@@ -90,6 +91,7 @@ class CallResponse(BaseModel):
     outcome: str
     sentiment: str | None = None
     transcript_summary: str | None = None
+    duration: int | None = None
     created_at: str
 
 
