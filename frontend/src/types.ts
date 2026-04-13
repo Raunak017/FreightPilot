@@ -71,4 +71,8 @@ export interface Filters {
   outcome?: string
   sentiment?: string
   funnelStep?: 'verified_mc' | 'load_matched' | 'booked'
+  lane?: string
+  equipment?: string
+  commodity?: string
+  rounds?: number
 }
