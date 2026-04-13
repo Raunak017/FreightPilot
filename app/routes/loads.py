@@ -10,6 +10,15 @@ from app.services.loads_search import search_loads
 router = APIRouter(prefix="/loads", tags=["loads"])
 
 
+@router.get("/by-id", response_model=LoadResponse)
+async def get_load_by_query(load_id: str, db: Session = Depends(get_db)) -> LoadResponse:
+    """Get load by ID via query param — alternate to GET /loads/{load_id}."""
+    load = db.query(Load).filter(Load.load_id == load_id).first()
+    if not load:
+        raise HTTPException(status_code=404, detail=f"Load {load_id} not found")
+    return LoadResponse(**_load_to_dict(load))
+
+
 @router.post("/search", response_model=SearchLoadsResponse)
 async def search(req: SearchLoadsRequest, db: Session = Depends(get_db)) -> SearchLoadsResponse:
     results = search_loads(
