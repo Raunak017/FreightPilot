@@ -73,6 +73,7 @@ class LogCallRequest(BaseModel):
     sentiment: str | None = Field(None, description="positive, neutral, or negative")
     transcript_summary: str | None = None
     duration: int | None = Field(None, description="Call duration in seconds")
+    created_at: str | None = Field(None, description="Override timestamp (ISO format), defaults to now")
 
     @field_validator("mc_number", mode="before")
     @classmethod
