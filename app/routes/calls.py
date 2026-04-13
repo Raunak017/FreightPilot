@@ -1,4 +1,6 @@
 """Call logging routes."""
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -23,6 +25,8 @@ async def log_call(req: LogCallRequest, db: Session = Depends(get_db)) -> CallRe
         transcript_summary=req.transcript_summary,
         duration=req.duration,
     )
+    if req.created_at:
+        call.created_at = datetime.fromisoformat(req.created_at)
     db.add(call)
     db.commit()
     db.refresh(call)
