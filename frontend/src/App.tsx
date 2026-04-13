@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
-import { fetchMetrics, fetchCalls } from './api'
-import type { Metrics, Call } from './types'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchCalls, fetchLoads } from './api'
+import { computeMetrics } from './computeMetrics'
+import type { Call, Load, Filters } from './types'
 import KpiCard from './components/KpiCard'
 import OutcomeChart from './components/OutcomeChart'
 import SentimentChart from './components/SentimentChart'
@@ -44,42 +45,55 @@ function RouteIcon() {
   )
 }
 
-function ShieldIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  )
-}
-
-function ClockIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-    </svg>
-  )
-}
-
 const DATE_RANGES = [
   { label: '7 days', value: 7 },
   { label: '30 days', value: 30 },
   { label: 'All time', value: undefined },
 ] as const
 
+function filterByDate(calls: Call[], days?: number): Call[] {
+  if (!days) return calls
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  return calls.filter((c) => new Date(c.created_at) >= cutoff)
+}
+
+function filterByFunnel(calls: Call[], step?: string): Call[] {
+  if (!step) return calls
+  switch (step) {
+    case 'verified_mc':
+      return calls.filter((c) => c.mc_number != null)
+    case 'load_matched':
+      return calls.filter((c) => c.matched_load_id != null)
+    case 'booked':
+      return calls.filter((c) => c.outcome === 'booked')
+    default:
+      return calls
+  }
+}
+
+function applyFilters(calls: Call[], filters: Filters): Call[] {
+  let result = calls
+  if (filters.outcome) result = result.filter((c) => c.outcome === filters.outcome)
+  if (filters.sentiment) result = result.filter((c) => c.sentiment === filters.sentiment)
+  if (filters.funnelStep) result = filterByFunnel(result, filters.funnelStep)
+  return result
+}
+
 export default function App() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null)
-  const [calls, setCalls] = useState<Call[]>([])
+  const [allCalls, setAllCalls] = useState<Call[]>([])
+  const [loads, setLoads] = useState<Load[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<number | undefined>(undefined)
+  const [filters, setFilters] = useState<Filters>({})
 
   useEffect(() => {
     async function load() {
-      setLoading(true)
       try {
-        const [m, c] = await Promise.all([fetchMetrics(dateRange), fetchCalls()])
-        setMetrics(m)
-        setCalls(c.results)
+        const [c, l] = await Promise.all([fetchCalls(), fetchLoads()])
+        setAllCalls(c.results)
+        setLoads(l.results)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data')
       } finally {
@@ -87,9 +101,19 @@ export default function App() {
       }
     }
     load()
-  }, [dateRange])
+  }, [])
 
-  if (loading && !metrics) {
+  const dateCalls = useMemo(() => filterByDate(allCalls, dateRange), [allCalls, dateRange])
+  const filteredCalls = useMemo(() => applyFilters(dateCalls, filters), [dateCalls, filters])
+  const metrics = useMemo(() => computeMetrics(filteredCalls, loads), [filteredCalls, loads])
+  // Funnel always uses date-filtered calls (not cross-filtered) so it shows full picture
+  const funnelMetrics = useMemo(() => computeMetrics(dateCalls, loads), [dateCalls, loads])
+
+  const hasActiveFilter = filters.outcome || filters.sentiment || filters.funnelStep
+
+  const clearAllFilters = () => setFilters({})
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-slate-400 text-sm">Loading dashboard...</div>
@@ -107,8 +131,6 @@ export default function App() {
       </div>
     )
   }
-
-  if (!metrics) return null
 
   const formatDuration = (s: number) => {
     if (!s) return '0s'
@@ -152,8 +174,27 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
-        {/* KPI Cards — Row 1 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Active filter banner */}
+        {hasActiveFilter && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center justify-between">
+            <div className="text-sm text-blue-700">
+              Filtering by:
+              {filters.outcome && <span className="ml-1 font-medium">{filters.outcome}</span>}
+              {filters.sentiment && <span className="ml-1 font-medium">{filters.sentiment} sentiment</span>}
+              {filters.funnelStep && <span className="ml-1 font-medium">{filters.funnelStep.replace('_', ' ')}</span>}
+              <span className="text-blue-500 ml-1">({filteredCalls.length} calls)</span>
+            </div>
+            <button
+              onClick={clearAllFilters}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Total Calls"
             value={metrics.total_calls}
@@ -166,36 +207,36 @@ export default function App() {
             icon={<CheckIcon />}
           />
           <KpiCard
-            title="Avg. Price"
+            title="Avg. Agreed Price"
             value={`$${metrics.avg_agreed_price.toLocaleString()}`}
-            subtitle="Booked calls"
+            subtitle={`$${metrics.avg_rate_per_mile}/mi · ${metrics.avg_haul_distance} mi avg`}
             icon={<DollarIcon />}
           />
           <KpiCard
-            title="Rate/Mile"
-            value={`$${metrics.avg_rate_per_mile}`}
-            subtitle={`${metrics.avg_haul_distance} mi avg`}
+            title="Avg. Rounds to Close"
+            value={metrics.avg_rounds_to_close}
+            subtitle={`${formatDuration(metrics.avg_duration)} avg call`}
             icon={<RouteIcon />}
-          />
-          <KpiCard
-            title="Margin Given"
-            value={`$${metrics.margin_protection.total_margin_given.toLocaleString()}`}
-            subtitle={`$${metrics.margin_protection.avg_margin_per_deal}/deal avg`}
-            icon={<ShieldIcon />}
-          />
-          <KpiCard
-            title="Avg. Duration"
-            value={formatDuration(metrics.avg_duration)}
-            subtitle="Per call"
-            icon={<ClockIcon />}
           />
         </div>
 
         {/* Funnel + Outcomes + Sentiment */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <FunnelChart data={metrics.funnel} />
-          <OutcomeChart data={metrics.outcomes} />
-          <SentimentChart data={metrics.sentiments} />
+          <FunnelChart
+            data={funnelMetrics.funnel}
+            activeFunnelStep={filters.funnelStep}
+            onClickFunnelStep={(step) => setFilters((f) => ({ ...f, funnelStep: step as Filters['funnelStep'], outcome: undefined }))}
+          />
+          <OutcomeChart
+            data={metrics.outcomes}
+            activeOutcome={filters.outcome}
+            onClickOutcome={(outcome) => setFilters((f) => ({ ...f, outcome, funnelStep: undefined }))}
+          />
+          <SentimentChart
+            data={metrics.sentiments}
+            activeSentiment={filters.sentiment}
+            onClickSentiment={(sentiment) => setFilters((f) => ({ ...f, sentiment }))}
+          />
         </div>
 
         {/* Top Lanes + Equipment + Commodity */}
@@ -205,13 +246,13 @@ export default function App() {
           <CommodityChart data={metrics.commodity_breakdown} />
         </div>
 
-        {/* Rounds chart (standalone, smaller) */}
+        {/* Rounds chart */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <RoundsChart data={metrics.rounds_distribution} />
         </div>
 
         {/* Calls table */}
-        <CallsTable calls={calls} />
+        <CallsTable calls={filteredCalls} />
       </main>
     </div>
   )

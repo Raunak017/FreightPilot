@@ -13,7 +13,6 @@ const OUTCOME_COLORS: Record<string, string> = {
   declined_by_carrier: '#F59E0B',
   no_eligible_mc: '#EF4444',
   no_matching_load: '#8B5CF6',
-  negotiation_failed: '#F97316',
   abandoned: '#94A3B8',
 }
 
@@ -22,24 +21,37 @@ const OUTCOME_LABELS: Record<string, string> = {
   declined_by_carrier: 'Declined',
   no_eligible_mc: 'Ineligible MC',
   no_matching_load: 'No Match',
-  negotiation_failed: 'Negotiation Failed',
   abandoned: 'Abandoned',
 }
 
 interface OutcomeChartProps {
   data: Record<string, number>
+  activeOutcome?: string
+  onClickOutcome?: (outcome: string | undefined) => void
 }
 
-export default function OutcomeChart({ data }: OutcomeChartProps) {
+export default function OutcomeChart({ data, activeOutcome, onClickOutcome }: OutcomeChartProps) {
   const chartData = Object.entries(data).map(([key, value]) => ({
     name: OUTCOME_LABELS[key] || key,
     count: value,
     key,
   }))
 
+  const handleClick = (entry: { key: string }) => {
+    if (!onClickOutcome) return
+    onClickOutcome(activeOutcome === entry.key ? undefined : entry.key)
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Call Outcomes</h3>
+      <h3 className="text-sm font-semibold text-slate-700 mb-4">
+        Call Outcomes
+        {activeOutcome && (
+          <span className="ml-2 text-xs font-normal text-blue-500 cursor-pointer" onClick={() => onClickOutcome?.(undefined)}>
+            Clear filter
+          </span>
+        )}
+      </h3>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
           <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
@@ -57,11 +69,18 @@ export default function OutcomeChart({ data }: OutcomeChartProps) {
               fontSize: '13px',
             }}
           />
-          <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
+          <Bar
+            dataKey="count"
+            radius={[0, 6, 6, 0]}
+            barSize={20}
+            cursor="pointer"
+            onClick={(_: unknown, index: number) => handleClick(chartData[index])}
+          >
             {chartData.map((entry) => (
               <Cell
                 key={entry.key}
                 fill={OUTCOME_COLORS[entry.key] || '#94A3B8'}
+                opacity={activeOutcome && activeOutcome !== entry.key ? 0.3 : 1}
               />
             ))}
           </Bar>

@@ -10,6 +10,14 @@ from app.services.loads_search import search_loads
 router = APIRouter(prefix="/loads", tags=["loads"])
 
 
+@router.get("/all", response_model=SearchLoadsResponse)
+async def get_all_loads(db: Session = Depends(get_db)) -> SearchLoadsResponse:
+    """Return all loads — used by dashboard for client-side metrics."""
+    loads = db.query(Load).all()
+    results = [LoadResponse(**_load_to_dict(l)) for l in loads]
+    return SearchLoadsResponse(results=results, count=len(results))
+
+
 @router.get("/by-id", response_model=LoadResponse)
 async def get_load_by_query(load_id: str, db: Session = Depends(get_db)) -> LoadResponse:
     """Get load by ID via query param — alternate to GET /loads/{load_id}."""

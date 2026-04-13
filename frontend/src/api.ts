@@ -1,4 +1,4 @@
-import type { Metrics, CallList } from './types'
+import type { Metrics, CallList, LoadList } from './types'
 
 const API_KEY = import.meta.env.VITE_API_KEY || 'dev-change-me'
 
@@ -14,8 +14,14 @@ export async function fetchMetrics(days?: number): Promise<Metrics> {
   return res.json()
 }
 
-export async function fetchCalls(limit = 50): Promise<CallList> {
+export async function fetchCalls(limit = 500): Promise<CallList> {
   const res = await fetch(`/calls/?limit=${limit}`, { headers })
   if (!res.ok) throw new Error(`Calls fetch failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchLoads(): Promise<LoadList> {
+  const res = await fetch('/loads/all', { headers })
+  if (!res.ok) throw new Error(`Loads fetch failed: ${res.status}`)
   return res.json()
 }
