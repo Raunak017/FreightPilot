@@ -1,5 +1,5 @@
 """Request and response schemas."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class VerifyCarrierRequest(BaseModel):
@@ -69,9 +69,14 @@ class LogCallRequest(BaseModel):
     matched_load_id: str | None = None
     final_price: float | None = None
     rounds_used: int | None = None
-    outcome: str = Field(..., description="booked, declined_by_carrier, no_eligible_mc, no_matching_load, negotiation_failed, abandoned")
+    outcome: str = Field(..., description="booked, declined_by_carrier, no_eligible_mc, no_matching_load, abandoned")
     sentiment: str | None = Field(None, description="positive, neutral, or negative")
     transcript_summary: str | None = None
+
+    @field_validator("mc_number", mode="before")
+    @classmethod
+    def coerce_mc_to_str(cls, v: object) -> str | None:
+        return str(v) if v is not None else None
 
 
 class CallResponse(BaseModel):
