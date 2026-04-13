@@ -14,9 +14,11 @@ const SENTIMENT_LABELS: Record<string, string> = {
 
 interface SentimentChartProps {
   data: Record<string, number>
+  activeSentiment?: string
+  onClickSentiment?: (sentiment: string | undefined) => void
 }
 
-export default function SentimentChart({ data }: SentimentChartProps) {
+export default function SentimentChart({ data, activeSentiment, onClickSentiment }: SentimentChartProps) {
   const chartData = Object.entries(data).map(([key, value]) => ({
     name: SENTIMENT_LABELS[key] || key,
     value,
@@ -32,9 +34,22 @@ export default function SentimentChart({ data }: SentimentChartProps) {
     )
   }
 
+  const handleClick = (_: unknown, index: number) => {
+    if (!onClickSentiment) return
+    const key = chartData[index].key
+    onClickSentiment(activeSentiment === key ? undefined : key)
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Carrier Sentiment</h3>
+      <h3 className="text-sm font-semibold text-slate-700 mb-4">
+        Carrier Sentiment
+        {activeSentiment && (
+          <span className="ml-2 text-xs font-normal text-blue-500 cursor-pointer" onClick={() => onClickSentiment?.(undefined)}>
+            Clear filter
+          </span>
+        )}
+      </h3>
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie
@@ -45,11 +60,14 @@ export default function SentimentChart({ data }: SentimentChartProps) {
             outerRadius={80}
             paddingAngle={4}
             dataKey="value"
+            cursor="pointer"
+            onClick={handleClick}
           >
             {chartData.map((entry) => (
               <Cell
                 key={entry.key}
                 fill={SENTIMENT_COLORS[entry.key] || '#94A3B8'}
+                opacity={activeSentiment && activeSentiment !== entry.key ? 0.3 : 1}
               />
             ))}
           </Pie>
