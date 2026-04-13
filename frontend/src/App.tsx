@@ -72,11 +72,33 @@ function filterByFunnel(calls: Call[], step?: string): Call[] {
   }
 }
 
-function applyFilters(calls: Call[], filters: Filters): Call[] {
+function applyFilters(calls: Call[], filters: Filters, loadMap: Map<string, Load>): Call[] {
   let result = calls
   if (filters.outcome) result = result.filter((c) => c.outcome === filters.outcome)
   if (filters.sentiment) result = result.filter((c) => c.sentiment === filters.sentiment)
   if (filters.funnelStep) result = filterByFunnel(result, filters.funnelStep)
+  if (filters.rounds != null) result = result.filter((c) => c.rounds_used === filters.rounds)
+  if (filters.lane) {
+    result = result.filter((c) => {
+      if (!c.matched_load_id) return false
+      const load = loadMap.get(c.matched_load_id)
+      return load ? `${load.origin} → ${load.destination}` === filters.lane : false
+    })
+  }
+  if (filters.equipment) {
+    result = result.filter((c) => {
+      if (!c.matched_load_id) return false
+      const load = loadMap.get(c.matched_load_id)
+      return load?.equipment_type === filters.equipment
+    })
+  }
+  if (filters.commodity) {
+    result = result.filter((c) => {
+      if (!c.matched_load_id) return false
+      const load = loadMap.get(c.matched_load_id)
+      return load?.commodity_type === filters.commodity
+    })
+  }
   return result
 }
 
@@ -103,13 +125,14 @@ export default function App() {
     load()
   }, [])
 
+  const loadMap = useMemo(() => new Map(loads.map((l) => [l.load_id, l])), [loads])
   const dateCalls = useMemo(() => filterByDate(allCalls, dateRange), [allCalls, dateRange])
-  const filteredCalls = useMemo(() => applyFilters(dateCalls, filters), [dateCalls, filters])
+  const filteredCalls = useMemo(() => applyFilters(dateCalls, filters, loadMap), [dateCalls, filters, loadMap])
   const metrics = useMemo(() => computeMetrics(filteredCalls, loads), [filteredCalls, loads])
   // Funnel always uses date-filtered calls (not cross-filtered) so it shows full picture
   const funnelMetrics = useMemo(() => computeMetrics(dateCalls, loads), [dateCalls, loads])
 
-  const hasActiveFilter = filters.outcome || filters.sentiment || filters.funnelStep
+  const hasActiveFilter = filters.outcome || filters.sentiment || filters.funnelStep || filters.lane || filters.equipment || filters.commodity || filters.rounds != null
 
   const clearAllFilters = () => setFilters({})
 
@@ -182,6 +205,10 @@ export default function App() {
               {filters.outcome && <span className="ml-1 font-medium">{filters.outcome}</span>}
               {filters.sentiment && <span className="ml-1 font-medium">{filters.sentiment} sentiment</span>}
               {filters.funnelStep && <span className="ml-1 font-medium">{filters.funnelStep.replace('_', ' ')}</span>}
+              {filters.lane && <span className="ml-1 font-medium">{filters.lane}</span>}
+              {filters.equipment && <span className="ml-1 font-medium">{filters.equipment}</span>}
+              {filters.commodity && <span className="ml-1 font-medium">{filters.commodity}</span>}
+              {filters.rounds != null && <span className="ml-1 font-medium">Round {filters.rounds}</span>}
               <span className="text-blue-500 ml-1">({filteredCalls.length} calls)</span>
             </div>
             <button
@@ -241,14 +268,30 @@ export default function App() {
 
         {/* Top Lanes + Equipment + Commodity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <TopLanesChart data={metrics.top_lanes} />
-          <EquipmentChart data={metrics.equipment_demand} />
-          <CommodityChart data={metrics.commodity_breakdown} />
+          <TopLanesChart
+            data={metrics.top_lanes}
+            activeLane={filters.lane}
+            onClickLane={(lane) => setFilters((f) => ({ ...f, lane }))}
+          />
+          <EquipmentChart
+            data={metrics.equipment_demand}
+            activeEquipment={filters.equipment}
+            onClickEquipment={(equipment) => setFilters((f) => ({ ...f, equipment }))}
+          />
+          <CommodityChart
+            data={metrics.commodity_breakdown}
+            activeCommodity={filters.commodity}
+            onClickCommodity={(commodity) => setFilters((f) => ({ ...f, commodity }))}
+          />
         </div>
 
         {/* Rounds chart */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <RoundsChart data={metrics.rounds_distribution} />
+          <RoundsChart
+            data={metrics.rounds_distribution}
+            activeRounds={filters.rounds}
+            onClickRounds={(rounds) => setFilters((f) => ({ ...f, rounds }))}
+          />
         </div>
 
         {/* Calls table */}
