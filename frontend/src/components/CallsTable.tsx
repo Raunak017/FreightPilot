@@ -60,6 +60,7 @@ interface CallsTableProps {
 export default function CallsTable({ calls }: CallsTableProps) {
   const [showAll, setShowAll] = useState(false)
   const [search, setSearch] = useState('')
+  const [expandedId, setExpandedId] = useState<number | null>(null)
 
   const filtered = search
     ? calls.filter(
@@ -90,13 +91,14 @@ export default function CallsTable({ calls }: CallsTableProps) {
           placeholder="Search by load ID, carrier, or MC..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+          className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-64"
         />
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-100">
+              <th className="w-8 px-3 py-3"></th>
               <th className="text-left px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Time</th>
               <th className="text-left px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Carrier</th>
               <th className="text-left px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Load</th>
@@ -108,37 +110,17 @@ export default function CallsTable({ calls }: CallsTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {displayed.map((call) => (
-              <tr key={call.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-3 text-slate-500 whitespace-nowrap">{formatDate(call.created_at)}</td>
-                <td className="px-6 py-3">
-                  <div className="font-medium text-slate-700">{call.carrier_name || '-'}</div>
-                  {call.mc_number && (
-                    <div className="text-xs text-slate-400">MC-{call.mc_number}</div>
-                  )}
-                </td>
-                <td className="px-6 py-3 text-slate-600 font-mono text-xs">{call.matched_load_id || '-'}</td>
-                <td className="px-6 py-3">
-                  <Badge
-                    text={OUTCOME_LABELS[call.outcome] || call.outcome}
-                    className={OUTCOME_BADGE[call.outcome] || OUTCOME_BADGE.abandoned}
-                  />
-                </td>
-                <td className="px-6 py-3">
-                  {call.sentiment ? (
-                    <Badge
-                      text={call.sentiment.charAt(0).toUpperCase() + call.sentiment.slice(1)}
-                      className={SENTIMENT_BADGE[call.sentiment] || SENTIMENT_BADGE.neutral}
-                    />
-                  ) : (
-                    <span className="text-slate-300">-</span>
-                  )}
-                </td>
-                <td className="px-6 py-3 text-right font-medium text-slate-700">{formatPrice(call.final_price)}</td>
-                <td className="px-6 py-3 text-center text-slate-500">{call.rounds_used ?? '-'}</td>
-                <td className="px-6 py-3 text-center text-slate-500">{formatDuration(call.duration)}</td>
-              </tr>
-            ))}
+            {displayed.map((call) => {
+              const isExpanded = expandedId === call.id
+              return (
+                <CallRow
+                  key={call.id}
+                  call={call}
+                  isExpanded={isExpanded}
+                  onToggle={() => setExpandedId(isExpanded ? null : call.id)}
+                />
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -146,12 +128,81 @@ export default function CallsTable({ calls }: CallsTableProps) {
         <div className="p-4 text-center border-t border-slate-100">
           <button
             onClick={() => setShowAll(!showAll)}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
           >
             {showAll ? 'Show Less' : `View All Calls (${filtered.length})`}
           </button>
         </div>
       )}
     </div>
+  )
+}
+
+function CallRow({ call, isExpanded, onToggle }: { call: Call; isExpanded: boolean; onToggle: () => void }) {
+  const hasSummary = !!call.transcript_summary
+
+  return (
+    <>
+      <tr
+        className={`hover:bg-slate-50 transition-colors ${hasSummary ? 'cursor-pointer' : ''}`}
+        onClick={hasSummary ? onToggle : undefined}
+      >
+        <td className="px-3 py-3 text-slate-400">
+          {hasSummary && (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          )}
+        </td>
+        <td className="px-6 py-3 text-slate-500 whitespace-nowrap">{formatDate(call.created_at)}</td>
+        <td className="px-6 py-3">
+          <div className="font-medium text-slate-700">{call.carrier_name || '-'}</div>
+          {call.mc_number && (
+            <div className="text-xs text-slate-400">MC-{call.mc_number}</div>
+          )}
+        </td>
+        <td className="px-6 py-3 text-slate-600 font-mono text-xs">{call.matched_load_id || '-'}</td>
+        <td className="px-6 py-3">
+          <Badge
+            text={OUTCOME_LABELS[call.outcome] || call.outcome}
+            className={OUTCOME_BADGE[call.outcome] || OUTCOME_BADGE.abandoned}
+          />
+        </td>
+        <td className="px-6 py-3">
+          {call.sentiment ? (
+            <Badge
+              text={call.sentiment.charAt(0).toUpperCase() + call.sentiment.slice(1)}
+              className={SENTIMENT_BADGE[call.sentiment] || SENTIMENT_BADGE.neutral}
+            />
+          ) : (
+            <span className="text-slate-300">-</span>
+          )}
+        </td>
+        <td className="px-6 py-3 text-right font-medium text-slate-700">{formatPrice(call.final_price)}</td>
+        <td className="px-6 py-3 text-center text-slate-500">{call.rounds_used ?? '-'}</td>
+        <td className="px-6 py-3 text-center text-slate-500">{formatDuration(call.duration)}</td>
+      </tr>
+      {isExpanded && call.transcript_summary && (
+        <tr>
+          <td colSpan={9} className="px-6 py-3 bg-slate-50 border-b border-slate-100">
+            <div className="flex gap-2 items-start max-w-3xl">
+              <span className="text-xs font-medium text-slate-500 mt-0.5 shrink-0">AI Summary</span>
+              <p className="text-sm text-slate-600 leading-relaxed">{call.transcript_summary}</p>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
