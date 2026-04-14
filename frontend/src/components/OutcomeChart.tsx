@@ -1,13 +1,3 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts'
-
 const PRIMARY = '#6366F1'
 
 const OUTCOME_LABELS: Record<string, string> = {
@@ -25,20 +15,24 @@ interface OutcomeChartProps {
 }
 
 export default function OutcomeChart({ data, activeOutcome, onClickOutcome }: OutcomeChartProps) {
-  const chartData = Object.entries(data).map(([key, value]) => ({
-    name: OUTCOME_LABELS[key] || key,
-    count: value,
-    key,
-  }))
+  const sorted = Object.entries(data)
+    .map(([key, count]) => ({ key, label: OUTCOME_LABELS[key] || key, count }))
+    .sort((a, b) => b.count - a.count)
 
-  const handleClick = (entry: { key: string }) => {
-    if (!onClickOutcome) return
-    onClickOutcome(activeOutcome === entry.key ? undefined : entry.key)
+  const max = sorted.length > 0 ? Math.max(...sorted.map((d) => d.count)) : 1
+
+  if (sorted.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h3 className="text-sm font-semibold text-slate-700 mb-4">Call Outcomes</h3>
+        <p className="text-sm text-slate-400">No data yet</p>
+      </div>
+    )
   }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">
+      <h3 className="text-sm font-semibold text-slate-700 mb-5">
         Call Outcomes
         {activeOutcome && (
           <span className="ml-2 text-xs font-normal text-indigo-500 cursor-pointer" onClick={() => onClickOutcome?.(undefined)}>
@@ -46,40 +40,40 @@ export default function OutcomeChart({ data, activeOutcome, onClickOutcome }: Ou
           </span>
         )}
       </h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} layout="vertical" margin={{ left: -10, right: 10 }}>
-          <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={90}
-            tick={{ fontSize: 12, fill: '#64748B' }}
-          />
-          <Tooltip
-            contentStyle={{
-              borderRadius: '8px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              fontSize: '13px',
-            }}
-          />
-          <Bar
-            dataKey="count"
-            radius={[0, 6, 6, 0]}
-            barSize={20}
-            cursor="pointer"
-            onClick={(_: unknown, index: number) => handleClick(chartData[index])}
-          >
-            {chartData.map((entry) => (
-              <Cell
-                key={entry.key}
-                fill={PRIMARY}
-                opacity={activeOutcome && activeOutcome !== entry.key ? 0.3 : 1}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="space-y-3">
+        {sorted.map((entry) => {
+          const pct = (entry.count / max) * 100
+          const isActive = activeOutcome === entry.key
+          const isDimmed = activeOutcome && !isActive
+
+          return (
+            <div
+              key={entry.key}
+              className={`cursor-pointer transition-opacity ${isDimmed ? 'opacity-30' : ''}`}
+              onClick={() => {
+                if (!onClickOutcome) return
+                onClickOutcome(isActive ? undefined : entry.key)
+              }}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-slate-600">{entry.label}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.max(pct, 8)}%`,
+                      backgroundColor: PRIMARY,
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-semibold text-slate-700 w-6 text-right">{entry.count}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
