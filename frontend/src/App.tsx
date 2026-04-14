@@ -5,7 +5,7 @@ import type { Call, Load, Filters } from './types'
 import KpiCard from './components/KpiCard'
 import OutcomeChart from './components/OutcomeChart'
 import SentimentChart from './components/SentimentChart'
-import RoundsChart from './components/RoundsChart'
+// RoundsChart removed for cleaner layout
 import FunnelChart from './components/FunnelChart'
 import TopLanesChart from './components/TopLanesChart'
 import EquipmentChart from './components/EquipmentChart'
@@ -199,8 +199,8 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         {/* Active filter banner */}
         {hasActiveFilter && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center justify-between">
-            <div className="text-sm text-blue-700">
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2 flex items-center justify-between">
+            <div className="text-sm text-indigo-700">
               Filtering by:
               {filters.outcome && <span className="ml-1 font-medium">{filters.outcome}</span>}
               {filters.sentiment && <span className="ml-1 font-medium">{filters.sentiment} sentiment</span>}
@@ -209,11 +209,11 @@ export default function App() {
               {filters.equipment && <span className="ml-1 font-medium">{filters.equipment}</span>}
               {filters.commodity && <span className="ml-1 font-medium">{filters.commodity}</span>}
               {filters.rounds != null && <span className="ml-1 font-medium">Round {filters.rounds}</span>}
-              <span className="text-blue-500 ml-1">({filteredCalls.length} calls)</span>
+              <span className="text-indigo-400 ml-1">({filteredCalls.length} calls)</span>
             </div>
             <button
               onClick={clearAllFilters}
-              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
             >
               Clear all filters
             </button>
@@ -282,15 +282,6 @@ export default function App() {
             data={metrics.commodity_breakdown}
             activeCommodity={filters.commodity}
             onClickCommodity={(commodity) => setFilters((f) => ({ ...f, commodity }))}
-          />
-        </div>
-
-        {/* Rounds chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <RoundsChart
-            data={metrics.rounds_distribution}
-            activeRounds={filters.rounds}
-            onClickRounds={(rounds) => setFilters((f) => ({ ...f, rounds }))}
           />
         </div>
 

@@ -8,7 +8,7 @@ interface KpiCardProps {
 export default function KpiCard({ title, value, subtitle, icon }: KpiCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-start gap-4">
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center">
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center">
         {icon}
       </div>
       <div>

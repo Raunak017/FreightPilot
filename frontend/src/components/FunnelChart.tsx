@@ -10,9 +10,9 @@ interface FunnelChartProps {
 }
 
 const STEPS = [
-  { key: 'total_calls', label: 'Total Calls', color: '#3B82F6', filterKey: undefined },
-  { key: 'verified_mc', label: 'Verified MC', color: '#6366F1', filterKey: 'verified_mc' },
-  { key: 'load_matched', label: 'Load Matched', color: '#8B5CF6', filterKey: 'load_matched' },
+  { key: 'total_calls', label: 'Total Calls', color: '#6366F1', filterKey: undefined },
+  { key: 'verified_mc', label: 'Verified MC', color: '#818CF8', filterKey: 'verified_mc' },
+  { key: 'load_matched', label: 'Load Matched', color: '#A5B4FC', filterKey: 'load_matched' },
   { key: 'booked', label: 'Booked', color: '#10B981', filterKey: 'booked' },
 ] as const
 
@@ -29,7 +29,7 @@ export default function FunnelChart({ data, activeFunnelStep, onClickFunnelStep 
       <h3 className="text-sm font-semibold text-slate-700 mb-5">
         Conversion Funnel
         {activeFunnelStep && (
-          <span className="ml-2 text-xs font-normal text-blue-500 cursor-pointer" onClick={() => onClickFunnelStep?.(undefined)}>
+          <span className="ml-2 text-xs font-normal text-indigo-500 cursor-pointer" onClick={() => onClickFunnelStep?.(undefined)}>
             Clear filter
           </span>
         )}
@@ -66,11 +66,11 @@ export default function FunnelChart({ data, activeFunnelStep, onClickFunnelStep 
                   style={{
                     width: `${Math.max(pct, 4)}%`,
                     backgroundColor: step.color,
-                    outline: isActive ? '2px solid #3B82F6' : 'none',
+                    outline: isActive ? '2px solid #6366F1' : 'none',
                     outlineOffset: '2px',
                   }}
                 >
-                  {pct >= 15 && (
+                  {pct < 100 && pct >= 15 && (
                     <span className="text-xs font-medium text-white">{pct}%</span>
                   )}
                 </div>
