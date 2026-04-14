@@ -13,6 +13,7 @@ const OUTCOME_COLORS: Record<string, string> = {
   declined_by_carrier: '#F59E0B',
   no_eligible_mc: '#EF4444',
   no_matching_load: '#8B5CF6',
+  escalated: '#3B82F6',
   abandoned: '#94A3B8',
 }
 
@@ -21,6 +22,7 @@ const OUTCOME_LABELS: Record<string, string> = {
   declined_by_carrier: 'Declined',
   no_eligible_mc: 'Ineligible MC',
   no_matching_load: 'No Match',
+  escalated: 'Escalated',
   abandoned: 'Abandoned',
 }
 

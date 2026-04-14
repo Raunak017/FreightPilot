@@ -99,3 +99,18 @@ class CallResponse(BaseModel):
 class CallListResponse(BaseModel):
     results: list[CallResponse]
     count: int
+
+
+# --- Carrier History ---
+
+class CarrierHistoryResponse(BaseModel):
+    mc_number: str
+    carrier_name: str | None = None
+    total_calls: int
+    total_bookings: int
+    avg_agreed_rate: float | None = None
+    last_call_date: str | None = None
+    lanes_hauled: list[str] = []
+    equipment_types: list[str] = []
+    avg_rounds_to_close: float | None = None
+    is_repeat_carrier: bool = False
