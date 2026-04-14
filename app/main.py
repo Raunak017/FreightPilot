@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="CarrierCallsAI",
+    title="Friegh Pilot",
     description="Inbound carrier sales automation backend.",
     lifespan=lifespan,
 )
