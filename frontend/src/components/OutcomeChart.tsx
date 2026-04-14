@@ -8,14 +8,7 @@ import {
   Cell,
 } from 'recharts'
 
-const OUTCOME_COLORS: Record<string, string> = {
-  booked: '#10B981',
-  declined_by_carrier: '#F59E0B',
-  no_eligible_mc: '#EF4444',
-  no_matching_load: '#8B5CF6',
-  escalated: '#3B82F6',
-  abandoned: '#94A3B8',
-}
+const PRIMARY = '#6366F1'
 
 const OUTCOME_LABELS: Record<string, string> = {
   booked: 'Booked',
@@ -49,18 +42,18 @@ export default function OutcomeChart({ data, activeOutcome, onClickOutcome }: Ou
       <h3 className="text-sm font-semibold text-slate-700 mb-4">
         Call Outcomes
         {activeOutcome && (
-          <span className="ml-2 text-xs font-normal text-blue-500 cursor-pointer" onClick={() => onClickOutcome?.(undefined)}>
+          <span className="ml-2 text-xs font-normal text-indigo-500 cursor-pointer" onClick={() => onClickOutcome?.(undefined)}>
             Clear filter
           </span>
         )}
       </h3>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
+        <BarChart data={chartData} layout="vertical" margin={{ left: -10, right: 10 }}>
           <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
           <YAxis
             type="category"
             dataKey="name"
-            width={130}
+            width={90}
             tick={{ fontSize: 12, fill: '#64748B' }}
           />
           <Tooltip
@@ -81,7 +74,7 @@ export default function OutcomeChart({ data, activeOutcome, onClickOutcome }: Ou
             {chartData.map((entry) => (
               <Cell
                 key={entry.key}
-                fill={OUTCOME_COLORS[entry.key] || '#94A3B8'}
+                fill={PRIMARY}
                 opacity={activeOutcome && activeOutcome !== entry.key ? 0.3 : 1}
               />
             ))}
