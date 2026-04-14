@@ -15,7 +15,6 @@ const OUTCOME_LABELS: Record<string, string> = {
   declined_by_carrier: 'Declined',
   no_eligible_mc: 'Ineligible MC',
   no_matching_load: 'No Match',
-  escalated: 'Escalated',
   abandoned: 'Abandoned',
 }
 

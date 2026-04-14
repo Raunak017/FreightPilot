@@ -35,7 +35,9 @@ def evaluate_offer(
 
     # Carrier asking within our ceiling — accept
     if carrier_offer <= ceiling:
-        if round_number >= MAX_ROUNDS:
+        # Accept if close enough — 5% on round 1, 8% on round 2+ (not worth another counter)
+        accept_threshold = 1.05 if round_number == 1 else 1.08
+        if carrier_offer <= loadboard_rate * accept_threshold or round_number >= MAX_ROUNDS:
             return NegotiateResponse(
                 action="accept",
                 counter_price=None,
@@ -85,6 +87,11 @@ def evaluate_offer(
     )
 
 
+def _round_to_50(value: float) -> float:
+    """Round to nearest $50 for clean counter prices."""
+    return round(value / 50) * 50
+
+
 def _compute_counter(loadboard_rate: float, carrier_offer: float, round_number: int) -> float:
     """Move from loadboard_rate toward carrier_offer by a round-dependent fraction.
 
@@ -93,4 +100,5 @@ def _compute_counter(loadboard_rate: float, carrier_offer: float, round_number: 
     """
     fractions = {1: 0.40, 2: 0.70}
     frac = fractions.get(round_number, 0.70)
-    return loadboard_rate + frac * (carrier_offer - loadboard_rate)
+    raw = loadboard_rate + frac * (carrier_offer - loadboard_rate)
+    return _round_to_50(raw)
