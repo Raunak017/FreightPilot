@@ -21,7 +21,7 @@ async def get_all_loads(db: Session = Depends(get_db)) -> SearchLoadsResponse:
 @router.get("/by-id", response_model=LoadResponse)
 async def get_load_by_query(load_id: str, db: Session = Depends(get_db)) -> LoadResponse:
     """Get load by ID via query param — alternate to GET /loads/{load_id}."""
-    load = db.query(Load).filter(Load.load_id == load_id).first()
+    load = _find_load(db, load_id)
     if not load:
         raise HTTPException(status_code=404, detail=f"Load {load_id} not found")
     return LoadResponse(**_load_to_dict(load))
@@ -44,10 +44,18 @@ async def search(req: SearchLoadsRequest, db: Session = Depends(get_db)) -> Sear
 
 @router.get("/{load_id}", response_model=LoadResponse)
 async def get_load(load_id: str, db: Session = Depends(get_db)) -> LoadResponse:
-    load = db.query(Load).filter(Load.load_id == load_id).first()
+    load = _find_load(db, load_id)
     if not load:
         raise HTTPException(status_code=404, detail=f"Load {load_id} not found")
     return LoadResponse(**_load_to_dict(load))
+
+
+def _find_load(db: Session, load_id: str) -> Load | None:
+    """Look up a load by exact ID, then try LD- prefix fallback."""
+    load = db.query(Load).filter(Load.load_id == load_id).first()
+    if not load and not load_id.upper().startswith("LD-"):
+        load = db.query(Load).filter(Load.load_id == f"LD-{load_id}").first()
+    return load
 
 
 def _load_to_dict(load: Load) -> dict:

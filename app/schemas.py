@@ -75,31 +75,24 @@ class LogCallRequest(BaseModel):
     duration: int | None = Field(None, description="Call duration in seconds")
     created_at: str | None = Field(None, description="Override timestamp (ISO format), defaults to now")
 
-    @field_validator("mc_number", mode="before")
+    @field_validator("mc_number", "carrier_name", "matched_load_id", "transcript_summary", "sentiment", mode="before")
     @classmethod
-    def coerce_mc_to_str(cls, v: object) -> str | None:
-        if v is None or v == "":
+    def coerce_str_fields(cls, v: object) -> str | None:
+        if v is None or v == "" or v == "null":
             return None
         return str(v)
 
     @field_validator("final_price", mode="before")
     @classmethod
     def coerce_final_price(cls, v: object) -> float | None:
-        if v is None or v == "":
+        if v is None or v == "" or v == "null":
             return None
         return float(v)
 
-    @field_validator("rounds_used", mode="before")
+    @field_validator("rounds_used", "dot_number", "duration", mode="before")
     @classmethod
-    def coerce_rounds_used(cls, v: object) -> int | None:
-        if v is None or v == "":
-            return None
-        return int(v)
-
-    @field_validator("dot_number", mode="before")
-    @classmethod
-    def coerce_dot_number(cls, v: object) -> int | None:
-        if v is None or v == "":
+    def coerce_int_fields(cls, v: object) -> int | None:
+        if v is None or v == "" or v == "null":
             return None
         return int(v)
 
