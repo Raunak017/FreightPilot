@@ -78,7 +78,30 @@ class LogCallRequest(BaseModel):
     @field_validator("mc_number", mode="before")
     @classmethod
     def coerce_mc_to_str(cls, v: object) -> str | None:
-        return str(v) if v is not None else None
+        if v is None or v == "":
+            return None
+        return str(v)
+
+    @field_validator("final_price", mode="before")
+    @classmethod
+    def coerce_final_price(cls, v: object) -> float | None:
+        if v is None or v == "":
+            return None
+        return float(v)
+
+    @field_validator("rounds_used", mode="before")
+    @classmethod
+    def coerce_rounds_used(cls, v: object) -> int | None:
+        if v is None or v == "":
+            return None
+        return int(v)
+
+    @field_validator("dot_number", mode="before")
+    @classmethod
+    def coerce_dot_number(cls, v: object) -> int | None:
+        if v is None or v == "":
+            return None
+        return int(v)
 
 
 class CallResponse(BaseModel):
