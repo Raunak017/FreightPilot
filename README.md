@@ -7,7 +7,7 @@ An AI voice agent handles inbound calls from carriers: verifies their MC number 
 ## Live Deployment
 
 - **Dashboard:** [`https://freightpilot-production.up.railway.app/dashboard`](https://freightpilot-production.up.railway.app/dashboard)
-- **Demon Video:** [`https://drive.google.com/file/d/18xB6mtRa9dvzkzEG8OlGMyM6riTAKOyK/view`](https://drive.google.com/file/d/18xB6mtRa9dvzkzEG8OlGMyM6riTAKOyK/view)
+- **Demo Video:** [`https://drive.google.com/file/d/18xB6mtRa9dvzkzEG8OlGMyM6riTAKOyK/view`](https://drive.google.com/file/d/18xB6mtRa9dvzkzEG8OlGMyM6riTAKOyK/view)
 - **API Health:** [`https://freightpilot-production.up.railway.app/healthz`](https://freightpilot-production.up.railway.app/healthz)
 
 ## Architecture
